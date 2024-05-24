@@ -18,10 +18,26 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.cepe1724.App_React_Login"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "1d121e31-3cfa-41e3-953f-fefd70b0c3d5"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1d121e31-3cfa-41e3-953f-fefd70b0c3d5"
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "owner": "cepe1724"
   }
 }
