@@ -1,6 +1,7 @@
 import { AppContext } from "../../context/AppContext"; // Asegúrate de importar el contexto
 import React, { useState, useContext } from "react";
 import { Input, Icon, Button } from "react-native-elements";
+
 import {
   View,
   Text,
@@ -45,10 +46,7 @@ export function InicioScreen() {
       setIdEmpresa(selectedEmpresa);
       setIdUsuario(idUsuarioBDD);
       setEmpresa(selectedEmpresaLabel);
-      Alert.alert(
-        "Login Successful",
-        `Welcome, , ${localUsername}, ${selectedEmpresa}, ${idUsuarioBDD}, ${selectedEmpresaLabel}`
-      );
+      
     } else {
       alert(
         "Por favor, ingresa tu usuario y contraseña y selecciona una empresa"
