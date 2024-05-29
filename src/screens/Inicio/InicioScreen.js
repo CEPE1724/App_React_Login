@@ -1,7 +1,6 @@
-import { AppContext } from "../../context/AppContext"; // Asegúrate de importar el contexto
 import React, { useState, useContext } from "react";
 import { Input, Icon, Button } from "react-native-elements";
-
+import AutoDismissAlert from "../../components/AutoDismissAlert"; // Asegúrate de importar correctamente
 import {
   View,
   Text,
@@ -15,9 +14,10 @@ import { styles } from "./InicioScreen.style";
 import axios from "axios";
 import { API_URLS } from "../../config/apiConfig";
 import { LinearGradient } from "expo-linear-gradient";
+import { AppContext } from "../../context/AppContext"; // Asegúrate de importar el contexto
+
 export function InicioScreen() {
-  const { setIsLoggedIn, setIdUsuario, setUsername, setEmpresa, setIdEmpresa } =
-    useContext(AppContext);
+  const { setIsLoggedIn, setIdUsuario, setUsername, setEmpresa, setIdEmpresa } = useContext(AppContext);
 
   const [localUsername, setLocalUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -28,6 +28,10 @@ export function InicioScreen() {
   const [selectedEmpresaLabel, setSelectedEmpresaLabel] = useState("");
   const [idUsuarioBDD, setIdUsuarioBDD] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertColor, setAlertColor] = useState("red"); // Define el color de la alerta
+  const [alertIcon, setAlertIcon] = useState("error"); // Define el tipo de error
 
   const handleUsernameChange = (value) => {
     setLocalUsername(value);
@@ -48,9 +52,8 @@ export function InicioScreen() {
       setEmpresa(selectedEmpresaLabel);
       
     } else {
-      alert(
-        "Por favor, ingresa tu usuario y contraseña y selecciona una empresa"
-      );
+      
+      showAlert("¡Alerta! Por favor, ingresa tu usuario y contraseña y selecciona una empresa.", "error", "#DB241F");
     }
   };
 
@@ -72,7 +75,7 @@ export function InicioScreen() {
         const idUsuario = data.data.datos[0].idUsuario;
         if (idUsuario === 0) {
           setUservalid(false);
-          console.error("Usuario o contraseña incorrectos");
+          showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
         } else {
           const responseEmpresas = await axios.get(
             API_URLS.getEmpresas(idUsuario)
@@ -80,7 +83,7 @@ export function InicioScreen() {
           const dataEmpresas = responseEmpresas.data;
           if (dataEmpresas.data.datos.length === 0) {
             setUservalid(false);
-            console.error("Usuario o contraseña incorrectos");
+            showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
           } else {
             const idEmpresa = dataEmpresas.data.datos[0].idEmpresa;
             const responseUserBDD = await axios.get(
@@ -90,7 +93,7 @@ export function InicioScreen() {
 
             if (dataUserBDD.data.datos.length === 0) {
               setUservalid(false);
-              console.error("Usuario o contraseña incorrectos");
+              showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
             } else {
               const idUsuarioBDD = dataUserBDD.data.datos[0].idUsuario;
               setIdUsuarioBDD(idUsuarioBDD);
@@ -102,13 +105,24 @@ export function InicioScreen() {
         }
       } else {
         setUservalid(false);
-        console.error("Usuario o contraseña incorrectos");
+        showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
       }
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const showAlert = (message, icon, color) => {
+    setAlertMessage(message);
+    setAlertIcon(icon); // Define el tipo de error
+    setAlertColor(color); // Define el color de la alerta
+    setAlertVisible(true);
+  };
+
+  const handleDismiss = () => {
+    setAlertVisible(false);
   };
 
   return (
@@ -157,7 +171,6 @@ export function InicioScreen() {
           }
           inputContainerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          
         />
       </View>
       {loading ? (
@@ -196,6 +209,15 @@ export function InicioScreen() {
           containerStyle={styles.buttonContainer}
         />
       )}
+      {alertVisible && (
+        <AutoDismissAlert
+          message={alertMessage}
+          onDismiss={handleDismiss}
+          icon={alertIcon} // Pasa el tipo de error como prop
+          color={alertColor} // Pasa el color como prop
+        />
+      )}
     </LinearGradient>
   );
+  
 }

@@ -19,6 +19,7 @@ const AlertComponent = ({
   bodega,
   habitacion,
   idEmpresa,
+  nombreHabitacion,
 }) => {
   const [guardiasData, setGuardiasData] = useState([]);
   const [selectedGuardia, setSelectedGuardia] = useState(null);
@@ -51,24 +52,29 @@ const AlertComponent = ({
         idGuardia: selectedGuardia,
         bPromocionHabi: 1,
         idempresa: idEmpresa,
-        // otros campos necesarios
       };
-  
-      // Llama a la función postCrearHabitacion del objeto API_URLS
       const response = await axios.post(API_URLS.postCrearHabitacion(), body);
-  
+
       if (response.status === 200) {
-        Alert.alert("Éxito", "La habitación ha sido creada correctamente.");
-        onYes();
+        const respuesta = response.data.data.datos[0];
+        const { ErrorMessage, ID, NumeroGenerado } = respuesta;
+  
+        if (ErrorMessage === "OK") {
+          Alert.alert(
+            "Éxito", `La habitación ha sido creada correctamente. N°:${NumeroGenerado} `
+          );
+          onYes();
+        }else {
+          Alert.alert("Error", `Hubo un problema al crear la habitación.`);
+        }
+        
       } else {
         Alert.alert("Error", "Hubo un problema al crear la habitación.");
       }
     } catch (error) {
-      console.error("Error en la solicitud POST:", error);
       Alert.alert("Error", "Hubo un problema al crear la habitación.");
     }
   };
-  
 
   const handleYes = () => {
     if (!selectedGuardia) {
@@ -97,6 +103,7 @@ const AlertComponent = ({
           <TouchableOpacity style={styles.closeButton} onPress={onNo}>
             <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
+          <Text style={styles.messageText}>{nombreHabitacion}</Text>
           <Text style={styles.messageText}>{message}</Text>
           {guardiasData.length > 0 ? (
             <Picker
@@ -122,7 +129,7 @@ const AlertComponent = ({
             <TouchableOpacity style={styles.button} onPress={handleYes}>
               <Text style={styles.buttonText}>Sí</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={onNo}>
+            <TouchableOpacity style={styles.button} onPress={handleYes}>
               <Text style={styles.buttonText}>No</Text>
             </TouchableOpacity>
           </View>
