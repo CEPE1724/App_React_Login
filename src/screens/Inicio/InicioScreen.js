@@ -66,34 +66,49 @@ export function InicioScreen() {
 
   const validating = async () => {
     setLoading(true);
+    let timeoutReached = false;
+  
+    // Definir un temporizador para detectar si el servidor no responde dentro de un período de tiempo determinado (por ejemplo, 10 segundos)
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        timeoutReached = true;
+        resolve();
+      }, 10000); // 10 segundos
+    });
+  
     try {
-      const response = await axios.get(
-        API_URLS.getUser(localUsername, password)
-      );
+      // Realizar la solicitud al servidor
+      const responsePromise = axios.get(API_URLS.getUser(localUsername, password));
+      const response = await Promise.race([responsePromise, timeoutPromise]); // Esperar a que ocurra una de las promesas
+  
+      // Verificar si se alcanzó el tiempo de espera
+      if (timeoutReached) {
+        throw new Error("Tiempo de espera excedido");
+      }
+  
       const data = response.data;
+  
       if (data.data && data.data.datos && data.data.datos.length > 0) {
         const idUsuario = data.data.datos[0].idUsuario;
+  
         if (idUsuario === 0) {
           setUservalid(false);
-          showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
+          showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
         } else {
-          const responseEmpresas = await axios.get(
-            API_URLS.getEmpresas(idUsuario)
-          );
+          const responseEmpresas = await axios.get(API_URLS.getEmpresas(idUsuario));
           const dataEmpresas = responseEmpresas.data;
+  
           if (dataEmpresas.data.datos.length === 0) {
             setUservalid(false);
-            showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
+            showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
           } else {
             const idEmpresa = dataEmpresas.data.datos[0].idEmpresa;
-            const responseUserBDD = await axios.get(
-              API_URLS.getUserBDD(localUsername, password, idEmpresa)
-            );
+            const responseUserBDD = await axios.get(API_URLS.getUserBDD(localUsername, password, idEmpresa));
             const dataUserBDD = responseUserBDD.data;
-
+  
             if (dataUserBDD.data.datos.length === 0) {
               setUservalid(false);
-              showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
+              showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
             } else {
               const idUsuarioBDD = dataUserBDD.data.datos[0].idUsuario;
               setIdUsuarioBDD(idUsuarioBDD);
@@ -105,14 +120,23 @@ export function InicioScreen() {
         }
       } else {
         setUservalid(false);
-        showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F"); // Define el tipo de error y color
+        showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
       }
     } catch (error) {
-      console.error(error);
+      // Manejar errores, incluido el tiempo de espera excedido
+      if (error.message === "Tiempo de espera excedido") {
+        showAlert("¡Alerta! El servidor no responde. Verifica tu conexión a Internet o inténtalo de nuevo más tarde.", "error", "#DB241F");
+      } else {
+        console.error(error);
+        showAlert("¡Alerta! Error de conexión. El servidor podría estar caído.", "error", "#DB241F");
+      }
     } finally {
       setLoading(false);
     }
   };
+  
+  
+  
 
   const showAlert = (message, icon, color) => {
     setAlertMessage(message);

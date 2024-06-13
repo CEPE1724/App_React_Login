@@ -58,16 +58,16 @@ const AlertComponent = ({
       if (response.status === 200) {
         const respuesta = response.data.data.datos[0];
         const { ErrorMessage, ID, NumeroGenerado } = respuesta;
-  
+
         if (ErrorMessage === "OK") {
           Alert.alert(
-            "Éxito", `La habitación ha sido creada correctamente. N°:${NumeroGenerado} `
+            "Éxito",
+            `La habitación ha sido creada correctamente. N°:${NumeroGenerado} `
           );
           onYes();
-        }else {
+        } else {
           Alert.alert("Error", `Hubo un problema al crear la habitación.`);
         }
-        
       } else {
         Alert.alert("Error", "Hubo un problema al crear la habitación.");
       }

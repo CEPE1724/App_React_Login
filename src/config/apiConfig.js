@@ -1,6 +1,6 @@
 // src/config/apiConfig.js
-//const API_BASE_URL = "https://468f-179-49-21-45.ngrok-free.app/api/v1";
-const API_BASE_URL = "http://192.168.2.124:3010/api/v1";
+//const API_BASE_URL = "https://7b3f-179-49-21-45.ngrok-free.app/api/v1";
+const API_BASE_URL = "https://192.168.1.137:3010/api/v1";
 export const API_URLS = {
   getUser: (username, password) => `${API_BASE_URL}/point/${username}/${password}`,
   getEmpresas: (idUsuario) => `${API_BASE_URL}/point/list/empresa/${idUsuario}`,
