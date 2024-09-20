@@ -9,11 +9,9 @@ import { LinearGradient } from "expo-linear-gradient";
 
 export function RestaurantScreen(props) {
   const { navigation } = props;
-  const { idUsuario, username, empresa, idEmpresa } = useContext(AppContext);
+  const { idUsuario, idEmpresa } = useContext(AppContext);
 
   const [empresaName, setEmpresaName] = useState([]);
-  const [selectedBodega, setSelectedBodega] = useState("");
-  const [selectedEmpresa, setSelectedEmpresa] = useState("");
   const [dataResponse, setDataResponse] = useState([]);
 
   useEffect(() => {
@@ -43,9 +41,7 @@ export function RestaurantScreen(props) {
 
     if (idUsuario && idEmpresa) {
       fetchData();
-
       const interval = setInterval(fetchData, 120000);
-
       return () => clearInterval(interval);
     }
   }, [idUsuario, idEmpresa]);
@@ -56,9 +52,11 @@ export function RestaurantScreen(props) {
         (empresa) => empresa.Nombre === nombreEmpresa
       );
       if (empresaSeleccionada) {
-        setSelectedEmpresa(nombreEmpresa);
-        setSelectedBodega(empresaSeleccionada.Bodega); // Asegúrate de utilizar el nombre correcto del campo de la bodega
-        goToRestaurant(empresaSeleccionada.Bodega, nombreEmpresa, empresaSeleccionada.Emoji);
+        navigation.navigate(screen.restaurant.AddRestaurants, {
+          selectedEmpresa: nombreEmpresa,
+          selectedBodega: empresaSeleccionada.Bodega,
+          emoji: empresaSeleccionada.Emoji,
+        });
       } else {
         Alert.alert("Error", "No se encontró información para esta empresa");
       }
@@ -67,31 +65,26 @@ export function RestaurantScreen(props) {
     }
   };
 
-  const goToRestaurant = (bodega, empresa, emoji) => {
-    navigation.navigate(screen.restaurant.AddRestaurants, {
-      selectedEmpresa: empresa,
-      selectedBodega: bodega,
-      emoji: emoji,
-    });
-  };
-
   const renderItem = ({ item }) => {
     const empresa = dataResponse.data.datos.find(
       (empresa) => empresa.Nombre === item
     );
     const iconName = empresa.Emoji || "home-account";
 
-    let iconColor;
-    if (iconName === "fire") {
-      iconColor = "#c9021f";
-    } else if (iconName === "water") {
-      iconColor = "#00a8f7";
-    } else if (iconName === "google-earth") {
-      iconColor = "#7dad1f";
-    } else if (iconName === "air") {
-      iconColor = "gray";
-    } else {
-      iconColor = "white";
+    let iconColor = "white"; // Default color
+    switch (iconName) {
+      case "fire":
+        iconColor = "#c9021f";
+        break;
+      case "water":
+        iconColor = "#00a8f7";
+        break;
+      case "google-earth":
+        iconColor = "#7dad1f";
+        break;
+      case "air":
+        iconColor = "gray";
+        break;
     }
 
     return (
@@ -105,7 +98,7 @@ export function RestaurantScreen(props) {
         </View>
         <Text style={styles.title}>{item}</Text>
         <Button
-          onPress={() => handleButtonPress(item, empresa.Emoji)}
+          onPress={() => handleButtonPress(item)}
           buttonStyle={styles.button}
           containerStyle={styles.buttonContainer}
           icon={<Icon name="chevron-right" type="material-community" color="white" size={24} />}
@@ -119,7 +112,7 @@ export function RestaurantScreen(props) {
       style={styles.container}
       colors={["#0f172a", "#115e59"]}
       start={{ x: 0, y: 0 }}
-      end={{ x: 2, y: 2 }}
+      end={{ x: 1, y: 1 }}
     >
       {empresaName.length > 0 && (
         <FlatList
@@ -135,22 +128,21 @@ export function RestaurantScreen(props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 50,
+    padding: 20,
   },
   itemContainer: {
     flex: 1,
-    margin: 10,
-    padding: 30,
+    margin: 15,
+    padding: 20,
     backgroundColor: "#1d2222",
-    borderRadius: 30,
+    borderRadius: 20,
     alignItems: "center",
     shadowColor: "white",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 2,
     elevation: 5,
-    height: 150,
-    marginVertical: 10,
+    height: 120, // Reduce the height for better fitting on tablets
   },
   button: {
     width: 38,
@@ -162,12 +154,11 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     position: "absolute",
-    top: 100,
-    left: 200,
+    top: 70,
+    left: 150, // Ajustar la posición en tablets
   },
   icon: {
     fontSize: 30,
-    position: "static",
     backgroundColor: "#115e59",
     borderRadius: 50,
     padding: 5,
@@ -178,13 +169,12 @@ const styles = StyleSheet.create({
     left: 10,
   },
   title: {
-    fontSize: 13,
+    fontSize: 16, // Aumentar el tamaño de fuente para mejor legibilidad
     color: "white",
     fontWeight: "bold",
     textAlign: "center",
     position: "absolute",
-    top: 50,
-    textShadow: "2px 2px 4px rgba(255, 255, 255, 0.8)" // Sombreado con desplazamiento horizontal de 2px, desplazamiento vertical de 2px, desenfoque de 4px y color blanco con opacidad 80%
+    top: 40,
+    textShadow: "2px 2px 4px rgba(255, 255, 255, 0.8)", // Sombreado con desplazamiento
   },
-  
 });

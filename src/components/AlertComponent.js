@@ -5,11 +5,15 @@ import {
   StyleSheet,
   Modal,
   Alert,
+  Dimensions,
+  ActivityIndicator, // Importa el componente de carga
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Picker } from "@react-native-picker/picker";
 import { API_URLS } from "../config/apiConfig";
+
+const { width, height } = Dimensions.get('window');
 
 const AlertComponent = ({
   message,
@@ -23,6 +27,8 @@ const AlertComponent = ({
 }) => {
   const [guardiasData, setGuardiasData] = useState([]);
   const [selectedGuardia, setSelectedGuardia] = useState(null);
+  const [showButtons, setShowButtons] = useState(false);
+  const [loading, setLoading] = useState(false); // Estado para manejar la carga
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,41 +48,46 @@ const AlertComponent = ({
     fetchData();
   }, []);
 
-  console.log("guardiasData", idEmpresa);
-
-  const crearHabitacion = async (selectedGuardia) => {
+  const crearHabitacion = async (bPromo) => {
     try {
       const body = {
         Bodega: bodega,
         idHabitacion: habitacion,
         idGuardia: selectedGuardia,
-        bPromocionHabi: 1,
+        bPromocionHabi: bPromo,
         idempresa: idEmpresa,
       };
       const response = await axios.post(API_URLS.postCrearHabitacion(), body);
 
       if (response.status === 200) {
         const respuesta = response.data.data.datos[0];
-        const { ErrorMessage, ID, NumeroGenerado } = respuesta;
+        const { ErrorMessage, NumeroGenerado } = respuesta;
 
         if (ErrorMessage === "OK") {
           Alert.alert(
             "Éxito",
-            `La habitación ha sido creada correctamente. N°:${NumeroGenerado} `
+            `La habitación ha sido creada correctamente. N°:${NumeroGenerado}`
           );
           onYes();
         } else {
-          Alert.alert("Error", `Hubo un problema al crear la habitación.`);
+          Alert.alert("Error", "Hubo un problema al crear la habitación.");
         }
       } else {
         Alert.alert("Error", "Hubo un problema al crear la habitación.");
       }
     } catch (error) {
       Alert.alert("Error", "Hubo un problema al crear la habitación.");
+    } finally {
+      setLoading(false); // Asegúrate de ocultar el indicador de carga al final
     }
   };
 
-  const handleYes = () => {
+  const handleGuardiaChange = (itemValue) => {
+    setSelectedGuardia(itemValue);
+    setShowButtons(itemValue !== ""); // Mostrar botones si se selecciona un guardia
+  };
+
+  const handleYes = async (promocionHabi) => {
     if (!selectedGuardia) {
       Alert.alert(
         "Selección requerida",
@@ -84,33 +95,35 @@ const AlertComponent = ({
       );
       return;
     }
+    setLoading(true); // Muestra el indicador de carga
+    await crearHabitacion(promocionHabi); // Llama a crearHabitacion directamente
+  };
 
-    crearHabitacion(selectedGuardia);
+  const handleNo = () => {
+    onNo(); // Cierra el modal
   };
 
   return (
-    <Modal transparent={true} animationType="slide" onRequestClose={onNo}>
+    <Modal transparent={true} animationType="slide" onRequestClose={handleNo}>
       <TouchableOpacity
         style={styles.modalContainer}
         activeOpacity={1}
-        onPress={onNo}
+        onPress={handleNo}
       >
         <TouchableOpacity
           style={styles.alertBox}
           activeOpacity={1}
           onPress={() => {}}
         >
-          <TouchableOpacity style={styles.closeButton} onPress={onNo}>
+          <TouchableOpacity style={styles.closeButton} onPress={handleNo}>
             <Text style={styles.closeButtonText}>X</Text>
           </TouchableOpacity>
-          <Text style={styles.messageText}>{nombreHabitacion}</Text>
+          <Text style={styles.messageText}>Habitación #{nombreHabitacion}</Text>
           <Text style={styles.messageText}>{message}</Text>
           {guardiasData.length > 0 ? (
             <Picker
               selectedValue={selectedGuardia}
-              onValueChange={(itemValue, itemIndex) =>
-                setSelectedGuardia(itemValue)
-              }
+              onValueChange={handleGuardiaChange}
               style={styles.picker}
             >
               <Picker.Item label="Selecciona un guardia" value="" />
@@ -125,14 +138,22 @@ const AlertComponent = ({
           ) : (
             <Text style={styles.itemText}>No hay guardias disponibles</Text>
           )}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={handleYes}>
-              <Text style={styles.buttonText}>Sí</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={handleYes}>
-              <Text style={styles.buttonText}>No</Text>
-            </TouchableOpacity>
-          </View>
+          {showButtons && !loading && (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.button} onPress={() => handleYes(1)}>
+                <Text style={styles.buttonText}>Sí</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => handleYes(0)}>
+                <Text style={styles.buttonText}>No</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          {loading && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#115e59" />
+              <Text style={styles.loadingText}>Cargando...</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </TouchableOpacity>
     </Modal>
@@ -147,7 +168,8 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   alertBox: {
-    width: 300,
+    width: width * 0.8, // 80% of screen width
+    maxWidth: 400, // Max width for larger screens
     padding: 20,
     backgroundColor: "white",
     borderRadius: 10,
@@ -171,7 +193,7 @@ const styles = StyleSheet.create({
     color: "white",
   },
   messageText: {
-    fontSize: 14,
+    fontSize: 16,
     marginBottom: 20,
     textAlign: "center",
   },
@@ -199,6 +221,17 @@ const styles = StyleSheet.create({
   buttonText: {
     color: "white",
     fontSize: 16,
+  },
+  loadingContainer: {
+    flexDirection: "column",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "#115e59",
   },
 });
 

@@ -20,7 +20,7 @@ function MainApp() {
     // Simular una carga de recursos, puedes reemplazar esto con tu lógica
     setTimeout(() => {
       setIsLoading(false);
-    }, 300000); // 3 segundos de carga
+    }, 4000); // 3 segundos de carga
   }, []);
 
   const handleLogin = () => {

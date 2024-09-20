@@ -14,7 +14,6 @@ import axios from "axios";
 import { API_URLS } from "../../config/apiConfig";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-
 import AlertComponent from "../../components/AlertComponent";
 
 export function AddRestaurants(props) {
@@ -31,9 +30,7 @@ export function AddRestaurants(props) {
 
   const fetchData = async () => {
     if (!selectedBodega || !idEmpresa) {
-      console.log(
-        "No se puede realizar la solicitud. selectedBodega o idEmpresa no están definidos."
-      );
+      console.log("No se puede realizar la solicitud. selectedBodega o idEmpresa no están definidos.");
       setLoading(false);
       return;
     }
@@ -49,18 +46,13 @@ export function AddRestaurants(props) {
     } catch (error) {
       console.error(error);
       setLoading(false);
-      Alert.alert(
-        "Error",
-        "Hubo un problema al cargar los datos de la empresa"
-      );
+      Alert.alert("Error", "Hubo un problema al cargar los datos de la empresa");
     }
   };
 
   useEffect(() => {
     fetchData();
-
     const interval = setInterval(fetchData, 120000);
-
     return () => clearInterval(interval);
   }, [idUsuario, idEmpresa, selectedBodega]);
 
@@ -71,11 +63,8 @@ export function AddRestaurants(props) {
       return guardiasData;
     } catch (error) {
       console.error(error);
-      Alert.alert(
-        "Error",
-        "Hubo un problema al cargar los datos de la empresa"
-      );
-      return []; // Devuelve un array vacío en caso de error
+      Alert.alert("Error", "Hubo un problema al cargar los datos de la empresa");
+      return [];
     }
   };
 
@@ -91,8 +80,6 @@ export function AddRestaurants(props) {
     fetchData();
   };
 
-  console.log("dataResponse", idUsuario);
-
   const GridItem = ({
     nombre,
     PrecioNormal,
@@ -101,36 +88,34 @@ export function AddRestaurants(props) {
     Color,
     bodega,
     idHabitacion,
-  }) => (
-    <View style={[styles.itemContainer, { backgroundColor: Color }]}>
-      <Text style={styles.itemText}>{nombre}</Text>
-      <Text style={styles.itemText}>
-        {HIn} - {HFi}
-      </Text>
-      {Color == "#228B22" && (
-        <Text style={styles.itemText}>${PrecioNormal}</Text>
-      )}
-      <Text style={styles.itemText}>
-        {Color === "#800020"
-          ? "Ocupado"
-          : Color === "#228B22"
-          ? "Libre"
-          : Color === "#FFA500"
-          ? "Reservado"
-          : Color === "#f9b825"
-          ? "Limpieza"
-          : "Desconocido"}
-      </Text>
-      {Color === "#228B22" && (
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => handleIconPress(bodega, idHabitacion, nombre)}
-        >
-          <FontAwesome name="cart-plus" size={16} color="white" />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+  }) => {
+    return (
+      <View style={[styles.itemContainer, { backgroundColor: Color }]}>
+        <Text style={styles.timeText}>{HIn} - {HFi}</Text>
+        <View style={styles.contentContainer}>
+          {Color === "#228B22" && (
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => handleIconPress(bodega, idHabitacion, nombre)}
+            >
+              <FontAwesome name="cart-plus" size={40} color="white" />
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.priceAndStatusContainer}>
+            <Text style={styles.priceText}>${PrecioNormal}</Text>
+            <Text style={styles.statusText}>
+              {Color === "#800020" ? "Ocupado" :
+               Color === "#228B22" ? "Libre" :
+               Color === "#FFA500" ? "Reservado" :
+               Color === "#f9b825" ? "Limpieza" : "Desconocido"}
+            </Text>
+          </View>
+          <Text style={styles.nombreText}>{nombre}</Text>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <LinearGradient
@@ -192,7 +177,6 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 10,
     padding: 10,
-    backgroundColor: "#fff",
     borderRadius: 10,
     alignItems: "center",
     shadowColor: "white",
@@ -201,13 +185,62 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 5,
     position: "relative",
+    minWidth: '45%', // Asegura un ancho mínimo
   },
-  itemText: {
-    fontSize: 12,
+  timeText: {
+    fontSize: 14,
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
-    fontStyle: "italic",
+    marginBottom: 5,
+  },
+  nombreText: {
+    fontSize: 30, // Ajustado para mejor legibilidad en tabletas
+    fontWeight: "bold",
+    color: "white",
+    marginLeft: 10,
+    flex: 1, // Permite que crezca
+  },
+  /*
+nombreText: {
+  fontSize: 40,
+  fontWeight: "bold",
+  color: "white",
+  marginLeft: 10,
+},*/
+  priceText: {
+    fontSize: 16, // Ajustado para mejor legibilidad en tabletas
+    fontWeight: "bold",
+    color: "white",
+    textAlign: "center",
+  },
+  statusText: {
+    fontSize: 14,
+    color: "white",
+    textAlign: "center",
+  },
+  contentContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginVertical: 5,
+  },
+  priceAndStatusContainer: {
+    alignItems: "center",
+    marginLeft: 10,
+    flexDirection: "column", // Apilar precio y estado
+    justifyContent: "center",
+  },
+  iconButton: {
+    backgroundColor: "rgba(0,0,0,0.5)",
+    padding: 5,
+    borderRadius: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   itemTextTitle: {
     fontSize: 20,
@@ -216,17 +249,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  iconButton: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 5,
-    borderRadius: 15,
-  },
 });
+
+export default AddRestaurants;
