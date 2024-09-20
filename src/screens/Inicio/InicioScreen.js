@@ -123,7 +123,6 @@ export function InicioScreen() {
         showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
       }
     } catch (error) {
-      showAlert("Error de conexión: " + error.message, "error", "#DB241F");
       // Manejar errores, incluido el tiempo de espera excedido
       if (error.message === "Tiempo de espera excedido") {
         showAlert("¡Alerta! El servidor no responde. Verifica tu conexión a Internet o inténtalo de nuevo más tarde.", "error", "#DB241F");
