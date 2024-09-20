@@ -1,11 +1,9 @@
+import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { RestaurantStack } from "./RestaurantStack";
 import { Icon } from "react-native-elements";
 import { screen } from "../utils";
-
-import { RestaurantScreen } from "../screens/Restaurants/RestaurantScreen";
-import { FavoriteScreen } from "../screens/FavoriteScreen";
-import { RankingScreen } from "../screens/RankingScreen";
+import AccountStack from "./AccountStack"; // Asegúrate de que la ruta y la importación sean correctas
 
 const Tab = createBottomTabNavigator();
 
@@ -13,26 +11,21 @@ export function AppNavigation() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false, // ocultamos el titulo o vamos a tener dos
+        headerShown: false, // Ocultamos el título del header para evitar duplicados
         tabBarActiveTintColor: "#00a680",
         tabBarInactiveTintColor: "#646464",
         tabBarIcon: ({ color, size }) => screenOptions(route, color, size),
       })}
     >
       <Tab.Screen
-        name={screen.ranking.tab}
-        component={RankingScreen}
-        options={{ title: "Ranking" }}
-      />
-      <Tab.Screen
         name={screen.restaurant.tab}
         component={RestaurantStack}
         options={{ title: "Bodega" }}
       />
       <Tab.Screen
-        name={screen.favorite.tab}
-        component={FavoriteScreen}
-        options={{ title: "Favorite" }}
+        name={screen.account.tab}
+        component={AccountStack}
+        options={{ title: "Cuenta" }}
       />
     </Tab.Navigator>
   );
@@ -46,6 +39,8 @@ function screenOptions(route, color, size) {
     iconName = "heart-outline";
   } else if (route.name === screen.ranking.tab) {
     iconName = "star-outline"; // Define el ícono que deseas para la pestaña Ranking
+  } else if (route.name === screen.account.tab) {
+    iconName = "home";
   }
   return (
     <Icon type="material-community" name={iconName} size={size} color={color} />

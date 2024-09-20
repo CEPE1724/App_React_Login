@@ -1,6 +1,6 @@
-import { AppContext } from "../../context/AppContext"; // Asegúrate de importar el contexto
 import React, { useState, useContext } from "react";
 import { Input, Icon, Button } from "react-native-elements";
+import AutoDismissAlert from "../../components/AutoDismissAlert"; // Asegúrate de importar correctamente
 import {
   View,
   Text,
@@ -14,9 +14,10 @@ import { styles } from "./InicioScreen.style";
 import axios from "axios";
 import { API_URLS } from "../../config/apiConfig";
 import { LinearGradient } from "expo-linear-gradient";
+import { AppContext } from "../../context/AppContext"; // Asegúrate de importar el contexto
+
 export function InicioScreen() {
-  const { setIsLoggedIn, setIdUsuario, setUsername, setEmpresa, setIdEmpresa } =
-    useContext(AppContext);
+  const { setIsLoggedIn, setIdUsuario, setUsername, setEmpresa, setIdEmpresa } = useContext(AppContext);
 
   const [localUsername, setLocalUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +28,10 @@ export function InicioScreen() {
   const [selectedEmpresaLabel, setSelectedEmpresaLabel] = useState("");
   const [idUsuarioBDD, setIdUsuarioBDD] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertColor, setAlertColor] = useState("red"); // Define el color de la alerta
+  const [alertIcon, setAlertIcon] = useState("error"); // Define el tipo de error
 
   const handleUsernameChange = (value) => {
     setLocalUsername(value);
@@ -45,14 +50,10 @@ export function InicioScreen() {
       setIdEmpresa(selectedEmpresa);
       setIdUsuario(idUsuarioBDD);
       setEmpresa(selectedEmpresaLabel);
-      Alert.alert(
-        "Login Successful",
-        `Welcome, , ${localUsername}, ${selectedEmpresa}, ${idUsuarioBDD}, ${selectedEmpresaLabel}`
-      );
+      
     } else {
-      alert(
-        "Por favor, ingresa tu usuario y contraseña y selecciona una empresa"
-      );
+      
+      showAlert("¡Alerta! Por favor, ingresa tu usuario y contraseña y selecciona una empresa.", "error", "#DB241F");
     }
   };
 
@@ -65,34 +66,49 @@ export function InicioScreen() {
 
   const validating = async () => {
     setLoading(true);
+    let timeoutReached = false;
+  
+    // Definir un temporizador para detectar si el servidor no responde dentro de un período de tiempo determinado (por ejemplo, 10 segundos)
+    const timeoutPromise = new Promise((resolve) => {
+      setTimeout(() => {
+        timeoutReached = true;
+        resolve();
+      }, 10000); // 10 segundos
+    });
+  
     try {
-      const response = await axios.get(
-        API_URLS.getUser(localUsername, password)
-      );
+      // Realizar la solicitud al servidor
+      const responsePromise = axios.get(API_URLS.getUser(localUsername, password));
+      const response = await Promise.race([responsePromise, timeoutPromise]); // Esperar a que ocurra una de las promesas
+  
+      // Verificar si se alcanzó el tiempo de espera
+      if (timeoutReached) {
+        throw new Error("Tiempo de espera excedido");
+      }
+  
       const data = response.data;
+  
       if (data.data && data.data.datos && data.data.datos.length > 0) {
         const idUsuario = data.data.datos[0].idUsuario;
+  
         if (idUsuario === 0) {
           setUservalid(false);
-          console.error("Usuario o contraseña incorrectos");
+          showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
         } else {
-          const responseEmpresas = await axios.get(
-            API_URLS.getEmpresas(idUsuario)
-          );
+          const responseEmpresas = await axios.get(API_URLS.getEmpresas(idUsuario));
           const dataEmpresas = responseEmpresas.data;
+  
           if (dataEmpresas.data.datos.length === 0) {
             setUservalid(false);
-            console.error("Usuario o contraseña incorrectos");
+            showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
           } else {
             const idEmpresa = dataEmpresas.data.datos[0].idEmpresa;
-            const responseUserBDD = await axios.get(
-              API_URLS.getUserBDD(localUsername, password, idEmpresa)
-            );
+            const responseUserBDD = await axios.get(API_URLS.getUserBDD(localUsername, password, idEmpresa));
             const dataUserBDD = responseUserBDD.data;
-
+  
             if (dataUserBDD.data.datos.length === 0) {
               setUservalid(false);
-              console.error("Usuario o contraseña incorrectos");
+              showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
             } else {
               const idUsuarioBDD = dataUserBDD.data.datos[0].idUsuario;
               setIdUsuarioBDD(idUsuarioBDD);
@@ -104,13 +120,33 @@ export function InicioScreen() {
         }
       } else {
         setUservalid(false);
-        console.error("Usuario o contraseña incorrectos");
+        showAlert("¡Alerta! Usuario o contraseña incorrectos.", "error", "#DB241F");
       }
     } catch (error) {
-      console.error(error);
+      // Manejar errores, incluido el tiempo de espera excedido
+      if (error.message === "Tiempo de espera excedido") {
+        showAlert("¡Alerta! El servidor no responde. Verifica tu conexión a Internet o inténtalo de nuevo más tarde.", "error", "#DB241F");
+      } else {
+        console.error(error);
+        showAlert("¡Alerta! Error de conexión. El servidor podría estar caído.", "error", "#DB241F");
+      }
     } finally {
       setLoading(false);
     }
+  };
+  
+  
+  
+
+  const showAlert = (message, icon, color) => {
+    setAlertMessage(message);
+    setAlertIcon(icon); // Define el tipo de error
+    setAlertColor(color); // Define el color de la alerta
+    setAlertVisible(true);
+  };
+
+  const handleDismiss = () => {
+    setAlertVisible(false);
   };
 
   return (
@@ -159,7 +195,6 @@ export function InicioScreen() {
           }
           inputContainerStyle={styles.inputContainer}
           inputStyle={styles.inputText}
-          
         />
       </View>
       {loading ? (
@@ -198,6 +233,15 @@ export function InicioScreen() {
           containerStyle={styles.buttonContainer}
         />
       )}
+      {alertVisible && (
+        <AutoDismissAlert
+          message={alertMessage}
+          onDismiss={handleDismiss}
+          icon={alertIcon} // Pasa el tipo de error como prop
+          color={alertColor} // Pasa el color como prop
+        />
+      )}
     </LinearGradient>
   );
+  
 }

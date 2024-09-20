@@ -1,9 +1,9 @@
 import React from "react";
 import { View, Text } from "react-native";
-export function AccountScreen() {
+export function AddAcount() {
   return (
     <View>
-      <Text>Account</Text>
+      <Text>Esaaa</Text>
     </View>
   );
 }
