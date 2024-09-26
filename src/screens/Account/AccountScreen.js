@@ -1,8 +1,9 @@
 import React, { useContext } from "react";
-import { View, Text, Button, StyleSheet, Alert } from "react-native";
-import { AppContext } from "../../context/AppContext"; // Asegúrate de que la ruta sea correcta
+import { View, Text, Button, StyleSheet, Alert, Image } from "react-native";
+import { AppContext } from "../../context/AppContext"; 
 import { useNavigation } from "@react-navigation/native";
-import { Icon } from "react-native-elements"; // Asegúrate de tener react-native-elements instalado
+import { Icon } from "react-native-elements"; 
+import logo from "../../../assets/logo.webp";
 
 export function AccountScreen() {
   const { setIsLoggedIn, username } = useContext(AppContext);
@@ -42,6 +43,18 @@ export function AccountScreen() {
       <Text style={styles.username}>{username}</Text>
 
       <Button title="Cerrar sesión" onPress={handleLogout} style={styles.logoutButton} />
+      
+      {/* Información de la persona que realizó la llamada */}
+      <View style={styles.infoContainer}>
+      <Text style={styles.infoText}>Versión 1.0.3.0</Text>
+        <Text style={styles.infoText}>Desarrollado por:</Text>
+        <Image source={logo} style={styles.logo} />
+        <Text style={styles.contactPerson}>E.B.C</Text>
+        <Text style={styles.contactPhone}>Teléfono: (02)-255 5212 Ext: 803</Text>
+        
+        {/* Inserción de la imagen */}
+
+      </View>
     </View>
   );
 }
@@ -62,11 +75,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
-  email: {
-    fontSize: 18,
-    color: "#666",
-    marginBottom: 30,
-  },
   buttonContainer: {
     width: "100%",
     marginBottom: 20,
@@ -74,6 +82,32 @@ const styles = StyleSheet.create({
   logoutButton: {
     backgroundColor: "#d9534f",
     color: "#fff",
+  },
+  infoContainer: {
+    position: 'absolute',
+    bottom: 20,
+    alignItems: 'center',
+    width: '100%',
+  },
+  infoText: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  contactPerson: {
+    fontSize: 10,
+    color: "#666",
+  },
+  contactPhone: {
+    fontSize: 10,
+    color: "#666",
+  },
+  logo: {
+    width: 100, // Ajusta el tamaño del logo
+    height: 80, // Ajusta el tamaño del logo
+    marginTop: 10, // Espacio entre la información y la imagen
+    marginBottom: 20, // Espacio adicional en la parte inferior
+    resizeMode: 'contain', // Asegura que el logo se ajuste sin distorsionarse
   },
 });
 

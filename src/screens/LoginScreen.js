@@ -62,7 +62,7 @@ export default function LoadingScreen() {
           <Animated.Text style={[styles.text, { opacity: opacityValue }]}>
             ¡Bienvenido!
           </Animated.Text>
-          <Text style={styles.title}> POINT</Text>
+          <Text style={styles.title}> TANTRA DESIGN HUB </Text>
         </View>
       </View>
     </View>

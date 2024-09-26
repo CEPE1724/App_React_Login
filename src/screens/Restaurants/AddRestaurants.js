@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   Alert,
   ActivityIndicator,
   TouchableOpacity,
@@ -22,11 +22,11 @@ export function AddRestaurants(props) {
   const { idUsuario, idEmpresa } = useContext(AppContext);
   const route = useRoute();
   const { selectedEmpresa, selectedBodega } = route.params;
-  const { navigation } = props;
   const [alertVisible, setAlertVisible] = useState(false);
   const [bodega, setBodega] = useState(0);
   const [habitacion, setHabitacion] = useState(0);
   const [nombreHabitacion, setNombreHabitacion] = useState(null);
+  const [refreshing, setRefreshing] = useState(false); // Para controlar el estado de refresco
 
   const fetchData = async () => {
     if (!selectedBodega || !idEmpresa) {
@@ -43,16 +43,18 @@ export function AddRestaurants(props) {
 
       setDataResponse(data.data.datos || []);
       setLoading(false);
+      setRefreshing(false); // Habilitar el botón después de cargar
     } catch (error) {
       console.error(error);
       setLoading(false);
+      setRefreshing(false); // Habilitar el botón incluso si hay un error
       Alert.alert("Error", "Hubo un problema al cargar los datos de la empresa");
     }
   };
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 120000);
+    const interval = setInterval(fetchData, 120000); // Actualiza cada 2 minutos
     return () => clearInterval(interval);
   }, [idUsuario, idEmpresa, selectedBodega]);
 
@@ -80,6 +82,11 @@ export function AddRestaurants(props) {
     fetchData();
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true); // Desactivar el botón
+    await fetchData(); // Esperar a que se complete la carga
+  };
+
   const GridItem = ({
     nombre,
     PrecioNormal,
@@ -101,7 +108,6 @@ export function AddRestaurants(props) {
               <FontAwesome name="cart-plus" size={40} color="white" />
             </TouchableOpacity>
           )}
-
           <View style={styles.priceAndStatusContainer}>
             <Text style={styles.priceText}>${PrecioNormal}</Text>
             <Text style={styles.statusText}>
@@ -130,23 +136,22 @@ export function AddRestaurants(props) {
           <ActivityIndicator size="large" color="#0000ff" />
         </View>
       ) : (
-        <FlatList
-          data={dataResponse}
-          renderItem={({ item }) => (
-            <GridItem
-              nombre={item.nombre}
-              PrecioNormal={item.PrecioNormal}
-              HIn={item.HIn}
-              HFi={item.HFi}
-              Color={item.Color}
-              bodega={item.Bodega}
-              idHabitacion={item.idHabitacion}
-            />
-          )}
-          keyExtractor={(item) => item.idHabitacion.toString()}
-          numColumns={2}
-          columnWrapperStyle={styles.row}
-        />
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          <View style={styles.gridContainer}>
+            {dataResponse.map(item => (
+              <GridItem
+                key={item.idHabitacion}
+                nombre={item.nombre}
+                PrecioNormal={item.PrecioNormal}
+                HIn={item.HIn}
+                HFi={item.HFi}
+                Color={item.Color}
+                bodega={item.Bodega}
+                idHabitacion={item.idHabitacion}
+              />
+            ))}
+          </View>
+        </ScrollView>
       )}
       {alertVisible && (
         <AlertComponent
@@ -160,6 +165,13 @@ export function AddRestaurants(props) {
           nombreHabitacion={nombreHabitacion}
         />
       )}
+      <TouchableOpacity
+        style={[styles.refreshButton, refreshing && styles.disabledButton]}
+        onPress={handleRefresh}
+        disabled={refreshing} // Desactivar el botón mientras se carga
+      >
+        <FontAwesome name="refresh" size={30} color="white" />
+      </TouchableOpacity>
     </LinearGradient>
   );
 }
@@ -169,13 +181,17 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 10,
   },
-  row: {
-    flex: 1,
+  scrollContainer: {
+    paddingBottom: 80, // Espacio adicional en la parte inferior para evitar superposición
+  },
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
   },
   itemContainer: {
-    flex: 1,
-    margin: 10,
+    width: '30%',
+    marginVertical: 10,
     padding: 10,
     borderRadius: 10,
     alignItems: "center",
@@ -184,38 +200,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 2,
     elevation: 5,
-    position: "relative",
-    minWidth: '45%', // Asegura un ancho mínimo
   },
   timeText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
     marginBottom: 5,
   },
   nombreText: {
-    fontSize: 30, // Ajustado para mejor legibilidad en tabletas
+    fontSize: 32,
     fontWeight: "bold",
     color: "white",
     marginLeft: 10,
-    flex: 1, // Permite que crezca
+    flex: 1,
   },
-  /*
-nombreText: {
-  fontSize: 40,
-  fontWeight: "bold",
-  color: "white",
-  marginLeft: 10,
-},*/
   priceText: {
-    fontSize: 16, // Ajustado para mejor legibilidad en tabletas
+    fontSize: 18,
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 16,
     color: "white",
     textAlign: "center",
   },
@@ -229,12 +236,12 @@ nombreText: {
   priceAndStatusContainer: {
     alignItems: "center",
     marginLeft: 10,
-    flexDirection: "column", // Apilar precio y estado
+    flexDirection: "column",
     justifyContent: "center",
   },
   iconButton: {
     backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 5,
+    padding: 8,
     borderRadius: 15,
   },
   loadingContainer: {
@@ -243,11 +250,25 @@ nombreText: {
     alignItems: "center",
   },
   itemTextTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#fff",
     textAlign: "center",
     marginBottom: 10,
+  },
+  refreshButton: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+    backgroundColor: "#1c2463",
+    padding: 15,
+    borderRadius: 50,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+  },
+  disabledButton: {
+    opacity: 0.5, // Opacidad para mostrar que el botón está deshabilitado
   },
 });
 

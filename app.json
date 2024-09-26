@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "App_React_Login",
+    "name": "Tantra Design Hub",
     "slug": "App_React_Login",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/tantra.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",

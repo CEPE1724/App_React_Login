@@ -1,0 +1,6 @@
+El error que paso fue que al hacer el pm2 existia un log que cada que detectaba se reiniciaba y no entraba a la app.
+npm install -g eas-cli
+eas build:configure 
+eas build -p android -profile preview
+
+para generar la apk 

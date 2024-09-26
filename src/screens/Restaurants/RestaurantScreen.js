@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { View, Text, Alert, FlatList, StyleSheet } from "react-native";
+import { View, Alert, StyleSheet, Dimensions } from "react-native";
 import { Button, Icon } from "react-native-elements";
 import { screen } from "../../utils";
 import { AppContext } from "../../context/AppContext";
@@ -10,9 +10,10 @@ import { LinearGradient } from "expo-linear-gradient";
 export function RestaurantScreen(props) {
   const { navigation } = props;
   const { idUsuario, idEmpresa } = useContext(AppContext);
+  const [empresaData, setEmpresaData] = useState([]);
 
-  const [empresaName, setEmpresaName] = useState([]);
-  const [dataResponse, setDataResponse] = useState([]);
+  // Obtener la altura de la pantalla
+  const screenHeight = Dimensions.get('window').height;
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,21 +22,15 @@ export function RestaurantScreen(props) {
           API_URLS.getEmpresaBodegas(idUsuario, idEmpresa)
         );
         const data = response.data;
-        setDataResponse(data); // Establecer dataResponse como el objeto data
+
         if (data.data && data.data.datos && data.data.datos.length > 0) {
-          const fetchedEmpresas = data.data.datos.map(
-            (empresa) => empresa.Nombre
-          );
-          setEmpresaName(fetchedEmpresas);
+          setEmpresaData(data.data.datos);
         } else {
-          setEmpresaName([]);
+          setEmpresaData([]);
         }
       } catch (error) {
         console.error(error);
-        Alert.alert(
-          "Error",
-          "Hubo un problema al cargar los datos de la empresa"
-        );
+        Alert.alert("Error", "Hubo un problema al cargar los datos de la empresa");
       }
     };
 
@@ -47,65 +42,22 @@ export function RestaurantScreen(props) {
   }, [idUsuario, idEmpresa]);
 
   const handleButtonPress = (nombreEmpresa) => {
-    if (dataResponse && dataResponse.data && dataResponse.data.datos) {
-      const empresaSeleccionada = dataResponse.data.datos.find(
-        (empresa) => empresa.Nombre === nombreEmpresa
-      );
-      if (empresaSeleccionada) {
-        navigation.navigate(screen.restaurant.AddRestaurants, {
-          selectedEmpresa: nombreEmpresa,
-          selectedBodega: empresaSeleccionada.Bodega,
-          emoji: empresaSeleccionada.Emoji,
-        });
-      } else {
-        Alert.alert("Error", "No se encontró información para esta empresa");
-      }
+    const empresaSeleccionada = empresaData.find(
+      (empresa) => empresa.Nombre === nombreEmpresa
+    );
+    if (empresaSeleccionada) {
+      navigation.navigate(screen.restaurant.AddRestaurants, {
+        selectedEmpresa: nombreEmpresa,
+        selectedBodega: empresaSeleccionada.Bodega,
+        emoji: empresaSeleccionada.Emoji,
+      });
     } else {
-      Alert.alert("Error", "No se encontraron datos disponibles");
+      Alert.alert("Error", "No se encontró información para esta empresa");
     }
   };
 
-  const renderItem = ({ item }) => {
-    const empresa = dataResponse.data.datos.find(
-      (empresa) => empresa.Nombre === item
-    );
-    const iconName = empresa.Emoji || "home-account";
-
-    let iconColor = "white"; // Default color
-    switch (iconName) {
-      case "fire":
-        iconColor = "#c9021f";
-        break;
-      case "water":
-        iconColor = "#00a8f7";
-        break;
-      case "google-earth":
-        iconColor = "#7dad1f";
-        break;
-      case "air":
-        iconColor = "gray";
-        break;
-    }
-
-    return (
-      <View style={styles.itemContainer}>
-        <View style={styles.itemContainerIcon}>
-          <Icon
-            type="material-community"
-            name={iconName}
-            iconStyle={[styles.icon, { color: iconColor }]}
-          />
-        </View>
-        <Text style={styles.title}>{item}</Text>
-        <Button
-          onPress={() => handleButtonPress(item)}
-          buttonStyle={styles.button}
-          containerStyle={styles.buttonContainer}
-          icon={<Icon name="chevron-right" type="material-community" color="white" size={24} />}
-        />
-      </View>
-    );
-  };
+  // Altura del botón restando el 20% de la altura total
+  const buttonHeight = (screenHeight * 0.6) / (empresaData.length || 1);
 
   return (
     <LinearGradient
@@ -114,67 +66,80 @@ export function RestaurantScreen(props) {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      {empresaName.length > 0 && (
-        <FlatList
-          data={empresaName}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => index.toString()}
-        />
-      )}
+      <View style={styles.buttonContainer}>
+        {empresaData.map((empresa, index) => {
+          const iconName = empresa.Emoji || "home-account";
+          let iconColor = "white"; // Default color
+
+          switch (iconName) {
+            case "fire":
+              iconColor = "#c9021f";
+              break;
+            case "water":
+              iconColor = "#00a8f7";
+              break;
+            case "google-earth":
+              iconColor = "#7dad1f";
+              break;
+            case "air":
+              iconColor = "gray";
+              break;
+          }
+
+          return (
+            <Button
+              key={index}
+              onPress={() => handleButtonPress(empresa.Nombre)}
+              buttonStyle={[styles.button, { height: buttonHeight }]} // Ajustar altura
+              icon={
+                <Icon
+                  type="material-community"
+                  name={iconName}
+                  iconStyle={{ color: iconColor, fontSize: 50 }} // Tamaño del ícono
+                />
+              }
+              title={empresa.Nombre}
+              titleStyle={styles.title}
+              containerStyle={styles.buttonWrapper}
+              iconContainerStyle={styles.iconContainer} // Agregar estilo para el contenedor del ícono
+            />
+          );
+        })}
+      </View>
     </LinearGradient>
   );
 }
 
+// Estilos
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-  },
-  itemContainer: {
-    flex: 1,
-    margin: 15,
-    padding: 20,
-    backgroundColor: "#1d2222",
-    borderRadius: 20,
-    alignItems: "center",
-    shadowColor: "white",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 2,
-    elevation: 5,
-    height: 120, // Reduce the height for better fitting on tablets
-  },
-  button: {
-    width: 38,
-    height: 38,
-    backgroundColor: "#115e51",
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 50,
   },
   buttonContainer: {
-    position: "absolute",
-    top: 70,
-    left: 150, // Ajustar la posición en tablets
+    flex: 1,
+    flexDirection: 'column', // Cambiar a columna para que los botones estén uno debajo del otro
+    justifyContent: 'space-around', // Espacio entre botones
+    alignItems: 'center', // Centrar el contenido
   },
-  icon: {
-    fontSize: 30,
-    backgroundColor: "#115e59",
+  button: {
+    backgroundColor: "#1d2222",
     borderRadius: 50,
-    padding: 5,
+    flexDirection: 'column', // Cambiar a columna para que el ícono esté encima del texto
+    alignItems: 'center', // Centra el contenido
+    justifyContent: 'center', // Centra el contenido
+    marginVertical: 5, // Espacio entre botones
+    width: '98%', // Ajustar el ancho del botón
   },
-  itemContainerIcon: {
-    position: "absolute",
-    top: 10,
-    left: 10,
+  buttonWrapper: {
+    width: '100%', // Ocupa todo el ancho
   },
   title: {
-    fontSize: 16, // Aumentar el tamaño de fuente para mejor legibilidad
     color: "white",
     fontWeight: "bold",
-    textAlign: "center",
-    position: "absolute",
-    top: 40,
-    textShadow: "2px 2px 4px rgba(255, 255, 255, 0.8)", // Sombreado con desplazamiento
+    marginTop: 5, // Espacio entre ícono y texto
+  },
+  iconContainer: {
+    marginBottom: 5, // Espacio entre ícono y título
   },
 });

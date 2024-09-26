@@ -157,10 +157,6 @@ export function InicioScreen() {
       style={styles.container}
     >
       <Text style={styles.title}>
-        Hola  {API_URLS.getEmpresas}
-        </Text>
-      
-      <Text style={styles.title}>
         Ingresa con tu usuario y contraseña del sistema
       </Text>
       <View style={styles.input}>
